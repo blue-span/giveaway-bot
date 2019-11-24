@@ -54,6 +54,12 @@ function renderTimer(delta) {
     hh_el.textContent = `${nn(hh)}`;
     mm_el.textContent = `${nn(mm)}`;
     ss_el.textContent = `${nn(ss)}`;
+
+    if (delta == 0) {
+        hh_el.style.color = "green";
+        mm_el.style.color = "green";
+        ss_el.style.color = "green";
+    }
 }
 
 function connect() {

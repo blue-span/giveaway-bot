@@ -26,7 +26,7 @@ async def countdown(ws):
         #print("announce", ws, "countdown tick", delta, file=sys.stderr)
         await ws.send_message(json.dumps({
             "event": "tick",
-            "delta": delta
+            "delta": delta if delta > 0 else 0
         }))
         await trio.sleep(1)
 
