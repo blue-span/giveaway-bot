@@ -56,4 +56,4 @@ def tls_context():
 
 async def start_service(receive_channel):
     _server = partial(server, receive_channel=receive_channel)
-    await serve_websocket(_server, '::', 8443, ssl_context=tls_context())
+    await serve_websocket(_server, '0.0.0.0', 8443, ssl_context=tls_context())
