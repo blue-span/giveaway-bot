@@ -57,7 +57,17 @@ function renderTimer(delta) {
 }
 
 function connect() {
-    const socket = new WebSocket('ws://localhost:8000');
+    const socket = (() => {
+        if (location.hostname === "localhost") {
+            return new WebSocket('ws://localhost:8000');
+        } else {
+            return new WebSocket('ws://bluespan.gg:8000');
+        }
+    })();
+
+    if (window.location.hash === "#white") {
+        document.body.style.color = "white";
+    }
 
     socket.addEventListener('connect', function (event) {
         console.log("connect");
