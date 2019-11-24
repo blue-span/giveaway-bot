@@ -1,15 +1,19 @@
 from functools import partial
+import datetime
 import time
 import json
 import sys
 import ssl
 import os
 
+import pytz
 import trio
 from trio_websocket import serve_websocket, ConnectionClosed
 
 
-end_time = time.time() + 1000
+PT = pytz.timezone("America/Los_Angeles")
+timestamp = lambda *a, **kw: int(PT.localize(datetime.datetime(*a, **kw)).timestamp())
+end_time = timestamp(2019, 11, 24, 12, 00)
 
 
 tls_cert = os.environ.get("BS_WSS_TLS_CERT", "../cert.pem")
