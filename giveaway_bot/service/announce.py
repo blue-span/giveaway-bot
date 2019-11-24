@@ -22,10 +22,11 @@ tls_key = os.environ.get("BS_WSS_TLS_KEY", "../key.pem")
 
 async def countdown(ws):
     while True:
-        #print("announce", ws, "countdown tick", file=sys.stderr)
+        delta = end_time - time.time()
+        #print("announce", ws, "countdown tick", delta, file=sys.stderr)
         await ws.send_message(json.dumps({
             "event": "tick",
-            "delta": end_time - time.time(),
+            "delta": delta
         }))
         await trio.sleep(1)
 
@@ -33,11 +34,12 @@ async def countdown(ws):
 async def winner(ws, receive_channel):
     async with receive_channel:
         async for message in receive_channel:
-            print("announce", ws, "winner", file=sys.stdout)
-            await ws.send_message(json.dumps({
-                "event": "winner",
-                **message
-            }))
+            if (end_time - time.time()) > 0:
+                print("announce", ws, "winner", file=sys.stdout)
+                await ws.send_message(json.dumps({
+                    "event": "winner",
+                    **message
+                }))
 
 
 async def server(request, *, receive_channel):
