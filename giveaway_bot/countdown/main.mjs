@@ -59,9 +59,9 @@ function renderTimer(delta) {
 function connect() {
     const socket = (() => {
         if (location.hostname === "localhost") {
-            return new WebSocket('ws://localhost:8000');
+            return new WebSocket('wss://localhost:8443');
         } else {
-            return new WebSocket('ws://bluespan.gg:8000');
+            return new WebSocket('wss://bluespan.gg:8443');
         }
     })();
 
