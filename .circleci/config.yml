@@ -1,0 +1,38 @@
+version: 2
+
+jobs:
+  build:
+    branches:
+      only:
+        - master
+    working_directory: ~/giveaway
+    docker:
+      - image: python:3.8
+    steps:
+      - checkout
+      - run:
+          name: build wheel
+          command: |
+            set -euxo
+
+            python3.8 -m pip install wheel
+            python3.8 setup.py bdist_wheel
+
+      - add_ssh_keys:
+          fingerprints:
+            - "2b:b0:24:15:ca:9b:52:cb:4a:c4:5a:17:f7:c8:87:36"
+
+      - run:
+          name: deploy to ed5rpzdi.lax.bluespan.gg
+          command: |
+            set -euxo
+
+            cat << EOF >> ~/.ssh/known_hosts
+            ed5rpzdi.lax.bluespan.gg,2001:19f0:6001:509f:5400:2ff:fe6b:19ff,45.77.68.171 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPTWYlTdGuLMakaC14VBZ6dYAVB/iGT6VPt8qvGrQGuLWIvAZyQO+nRBlkslmHQiAZFr7/V9P/q2C+0pKdYtHMs=
+            EOF
+
+            wheel="$(echo dist/*.whl)"
+
+            scp "$wheel" deploy@ed5rpzdi.lax.bluespan.gg:/home/deploy/wheels/
+            ssh deploy@ed5rpzdi.lax.bluespan.gg python3.8 -m pip install --user --upgrade "/home/deploy/wheels/$(basename $wheel)"
+            #ssh deploy@ed5rpzdi.lax.bluespan.gg doas /sbin/rc-service giveaway-bot restart
