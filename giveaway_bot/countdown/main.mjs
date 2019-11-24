@@ -65,8 +65,13 @@ function connect() {
         }
     })();
 
+    if (location.hostname === "bluespan.gg") {
+        document.body.style.color = "white";
+    }
     if (window.location.hash === "#white") {
         document.body.style.color = "white";
+    } else if (window.location.hash === "#black") {
+        document.body.style.color = "black";
     }
 
     socket.addEventListener('connect', function (event) {
