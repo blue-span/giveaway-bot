@@ -35,14 +35,12 @@ async def json_request_factory(request_builder, authorize, make_request):
 
 async def chat_handler(*, live_chat_id, authorize, send_channel):
     async with client.factory("www.googleapis.com", 443) as make_request:
-        """
         async with oauth.authorizer(_send_token) as authorize_bluespangg:
             builder = partial(youtube.insert_live_chat_message_builder,
                 live_chat_id=live_chat_id,
-                message_text="Good morning, Mr @Blue Span.",
+                message_text="Good morning, Mr. @Blue Span.",
             )
             await json_request_factory(builder, authorize_bluespangg, make_request)
-        """
 
         async def next_messages(**k):
             builder = partial(youtube.list_live_chat_messages_builder, live_chat_id=live_chat_id, **k)
