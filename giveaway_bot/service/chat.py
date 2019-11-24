@@ -95,6 +95,9 @@ async def start_service(send_channel):
                 partial(youtube.list_live_broadcasts_builder), authorize, make_request
             )
 
+            import pprint
+            pprint.pprint(data)
+
             async with trio.open_nursery() as chat_handlers:
                 # Make two concurrent calls to child()
                 for broadcast in data["items"]:

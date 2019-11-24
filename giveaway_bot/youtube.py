@@ -12,7 +12,8 @@ def list_live_broadcasts_builder(authorization_header, *, page_token=None):
             "part": "snippet",
             #"id": "vDDxJwGzMnE",
             #"mine": "true",
-            "broadcastStatus": "active",
+            "id": "wCfY0uYma4Y",
+            #"broadcastStatus": "active",
             **page_token_kv
         }),
         headers=[

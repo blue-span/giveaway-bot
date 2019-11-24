@@ -137,3 +137,8 @@ async def authorizer(_token):
             return request
 
         yield authorize
+
+
+if __name__ == "__main__":
+    import trio
+    print(trio.run(get_refresh_token))
