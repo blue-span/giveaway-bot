@@ -8,8 +8,8 @@ from uuid import UUID
 
 import h11
 
-from giveaway_bot.http import client
-from giveaway_bot import selection
+from giveaway.http import client
+from giveaway.bot import selection
 
 
 _token = os.environ["BS_TOKEN"]

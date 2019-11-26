@@ -5,7 +5,7 @@ jobs:
     branches:
       only:
         - master
-    working_directory: ~/giveaway
+    working_directory: ~/giveaway-bot
     docker:
       - image: python:3.8
     steps:

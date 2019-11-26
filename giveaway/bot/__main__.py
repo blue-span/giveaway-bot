@@ -4,9 +4,9 @@ import math
 
 import trio
 
-from giveaway_bot.service import chat
-from giveaway_bot.service import winner
-from giveaway_bot.service import announce
+from giveaway.bot.service import chat
+from giveaway.bot.service import winner
+from giveaway.bot.service import announce
 
 
 async def start_services():

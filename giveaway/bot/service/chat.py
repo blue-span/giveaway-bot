@@ -6,9 +6,9 @@ import json
 import h11
 import trio
 
-from giveaway_bot.http import client
-from giveaway_bot import oauth
-from giveaway_bot import youtube
+from giveaway.http import client
+from giveaway.bot import oauth
+from giveaway.bot import youtube
 
 
 _watch_token = os.environ["BS_CHAT_WATCH_TOKEN"]
