@@ -15,24 +15,6 @@ _watch_token = os.environ["BS_CHAT_WATCH_TOKEN"]
 _send_token = os.environ["BS_CHAT_SEND_TOKEN"]
 
 
-async def json_request_factory(request_builder, authorize, make_request):
-    request_events = await authorize(request_builder)
-
-    buf = bytearray()
-    async for event in make_request(*request_events):
-        if isinstance(event, h11.Response):
-            response = event
-            assert response.status_code == 200, response
-        elif isinstance(event, h11.Data):
-            data = event
-            buf.extend(data.data)
-        else:
-            assert False, type(event)
-
-    data = json.loads(buf)
-    return data
-
-
 async def chat_handler(*, live_chat_id, authorize, send_channel):
     async with client.factory("www.googleapis.com", 443) as make_request:
         async with oauth.authorizer(_send_token) as authorize_bluespangg:
@@ -40,11 +22,11 @@ async def chat_handler(*, live_chat_id, authorize, send_channel):
                 live_chat_id=live_chat_id,
                 message_text="Good morning, Mr. @Blue Span.",
             )
-            await json_request_factory(builder, authorize_bluespangg, make_request)
+            await client.json_auth_request_factory(builder, authorize_bluespangg, make_request)
 
         async def next_messages(**k):
             builder = partial(youtube.list_live_chat_messages_builder, live_chat_id=live_chat_id, **k)
-            return await json_request_factory(builder, authorize, make_request)
+            return await client.json_auth_request_factory(builder, authorize, make_request)
 
         async def messages_generator():
             data = await next_messages()
@@ -91,7 +73,7 @@ async def start_service(send_channel):
         seen = set()
 
         while True:
-            data = await json_request_factory(
+            data = await client.json_auth_request_factory(
                 partial(youtube.list_live_broadcasts_builder), authorize, make_request
             )
 
