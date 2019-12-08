@@ -1,28 +1,58 @@
 from functools import partial
+from datetime import datetime
 import os
 import sys
 import json
+import time
 
 import h11
 import trio
 
 from giveaway.http import client
-from giveaway.bot import oauth
+from giveaway import oauth
 from giveaway.bot import youtube
+from giveaway.bot import giveaway
 
 
 _watch_token = os.environ["BS_CHAT_WATCH_TOKEN"]
 _send_token = os.environ["BS_CHAT_SEND_TOKEN"]
 
+_epoch = time.time()
+
+
+async def chat_reply_dispatch(message):
+    from pprint import pprint
+    pprint(message["authorDetails"])
+    if not any([message["authorDetails"]["isChatModerator"],
+                message["authorDetails"]["isChatOwner"],]):
+        return
+
+    if datetime.strptime(message["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%S.%f%z").timestamp() < _epoch:
+        return
+
+    message_text = message["snippet"]["textMessageDetails"]["messageText"]
+    if message_text.strip() == "!giveaway-odds":
+        async with client.factory("bluespan.gg", 443) as make_request:
+            prize_registrations = await giveaway.json_request_factory(giveaway.get_registrations_builder, make_request)
+            from pprint import pprint
+            pprint(prize_registrations)
+            for registrations in prize_registrations.values():
+                yield f"{registrations[0]['prize_title']}: {100/len(registrations):.1f}% win probability"
+
 
 async def chat_handler(*, live_chat_id, authorize, send_channel):
-    async with client.factory("www.googleapis.com", 443) as make_request:
-        async with oauth.authorizer(_send_token) as authorize_bluespangg:
+    async with client.factory("www.googleapis.com", 443) as make_request, \
+               trio.open_nursery() as chat_dispatcher, \
+               oauth.authorizer(_send_token) as authorize_reply:
+
+        """
+        async with :
             builder = partial(youtube.insert_live_chat_message_builder,
                 live_chat_id=live_chat_id,
                 message_text="Good morning, Mr. @Blue Span.",
             )
             await client.json_auth_request_factory(builder, authorize_bluespangg, make_request)
+        """
 
         async def next_messages(**k):
             builder = partial(youtube.list_live_chat_messages_builder, live_chat_id=live_chat_id, **k)
@@ -42,7 +72,7 @@ async def chat_handler(*, live_chat_id, authorize, send_channel):
                     if backoff == 0:
                         return base_backoff * data["pollingIntervalMillis"] / 1000
                     else:
-                        backoff = backoff * 2 if backoff * 2 <= 80 else 80
+                        backoff = backoff * 2 if backoff * 2 <= 30 else 30
                         return backoff
 
                 backoff = get_backoff()
@@ -61,6 +91,13 @@ async def chat_handler(*, live_chat_id, authorize, send_channel):
                     published_at=published_at,
                     message_text=message_text,
                 ))
+
+                async for reply_text in chat_reply_dispatch(message):
+                    builder = partial(youtube.insert_live_chat_message_builder,
+                        live_chat_id=live_chat_id,
+                        message_text=reply_text,
+                    )
+                    await client.json_auth_request_factory(builder, authorize_reply, make_request)
             else:
                 print("unhandled message type", message["snippet"]["type"], file=sys.stderr)
 

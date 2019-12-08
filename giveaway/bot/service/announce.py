@@ -13,11 +13,17 @@ from trio_websocket import serve_websocket, ConnectionClosed
 
 PT = pytz.timezone("America/Los_Angeles")
 timestamp = lambda *a, **kw: int(PT.localize(datetime.datetime(*a, **kw)).timestamp())
-end_time = timestamp(2019, 11, 24, 12, 00)
+end_time = timestamp(2019, 12, 8, 12, 00)
 
 
 tls_cert = os.environ.get("BS_WSS_TLS_CERT", "../cert.pem")
 tls_key = os.environ.get("BS_WSS_TLS_KEY", "../key.pem")
+
+
+announcer_sockets = [
+]
+
+last_message = None
 
 
 async def countdown(ws):
@@ -31,23 +37,17 @@ async def countdown(ws):
         await trio.sleep(1)
 
 
-async def winner(ws, receive_channel):
-    async with receive_channel:
-        async for message in receive_channel:
-            if (end_time - time.time()) > 0:
-                print("announce", ws, "winner", file=sys.stdout)
-                await ws.send_message(json.dumps({
-                    "event": "winner",
-                    **message
-                }))
-
-
-async def server(request, *, receive_channel):
+async def server(request):
     ws = await request.accept()
+    if last_message is not None:
+        await ws.send_message(json.dumps({
+            "event": "winner",
+            **last_message
+        }))
+    announcer_sockets.append(ws)
     try:
         async with trio.open_nursery() as announcers:
             announcers.start_soon(countdown, ws)
-            announcers.start_soon(winner, ws, receive_channel.clone())
     except ConnectionClosed:
         pass
 
@@ -60,6 +60,25 @@ def tls_context():
     return tls_context
 
 
+async def tee(receive_channel):
+    async with receive_channel:
+        async for message in receive_channel:
+            global last_message
+            last_message = message
+            if (end_time - time.time()) > 0:
+                for ws in announcer_sockets:
+                    print("announce", ws, "winner", file=sys.stdout)
+                    try:
+                        await ws.send_message(json.dumps({
+                            "event": "winner",
+                            **message
+                        }))
+                    except Exception:
+                        pass
+
+
 async def start_service(receive_channel):
-    _server = partial(server, receive_channel=receive_channel)
-    await serve_websocket(_server, '0.0.0.0', 8443, ssl_context=tls_context())
+
+    async with trio.open_nursery() as n:
+        n.start_soon(partial(tee, receive_channel=receive_channel))
+        n.start_soon(partial(serve_websocket, server, '0.0.0.0', 8443, ssl_context=tls_context()))

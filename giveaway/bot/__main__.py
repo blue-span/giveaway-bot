@@ -10,7 +10,7 @@ from giveaway.bot.service import announce
 
 
 async def start_services():
-    chat_send, chat_receive = trio.open_memory_channel(0)
+    chat_send, chat_receive = trio.open_memory_channel(math.inf)
     announce_send, announce_receive = trio.open_memory_channel(math.inf)
 
     async with trio.open_nursery() as services:

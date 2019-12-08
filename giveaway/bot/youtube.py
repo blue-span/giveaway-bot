@@ -3,6 +3,11 @@ import json
 
 import h11
 
+import os
+
+
+_video_id = os.environ["BS_VIDEO_ID"]
+
 
 def list_live_broadcasts_builder(authorization_header, *, page_token=None):
     page_token_kv = {"pageToken": page_token} if page_token is not None else {}
@@ -10,9 +15,8 @@ def list_live_broadcasts_builder(authorization_header, *, page_token=None):
         method="GET",
         target="/youtube/v3/liveBroadcasts?" + parse.urlencode({
             "part": "snippet",
-            #"id": "vDDxJwGzMnE",
             #"mine": "true",
-            "id": "wCfY0uYma4Y",
+            "id": _video_id,
             #"broadcastStatus": "active",
             **page_token_kv
         }),
@@ -29,7 +33,7 @@ def list_live_chat_messages_builder(authorization_header, *, live_chat_id, page_
     request = h11.Request(
         method="GET",
         target="/youtube/v3/liveChat/messages?" + parse.urlencode({
-            "part": "snippet",
+            "part": "snippet,authorDetails",
             "liveChatId": live_chat_id,
             **page_token_kv
         }),
